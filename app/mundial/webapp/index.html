@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mundial 2026 - Cloud</title>
+
+    <!-- Bootstrap de UI5: carga el framework desde el CDN de SAP -->
+  <script
+        id="sap-ui-bootstrap"
+        src="https://ui5.sap.com/resources/sap-ui-core.js"
+        data-sap-ui-theme="sap_horizon"
+        data-sap-ui-libs="sap.m,sap.ui.core,sap.ui.layout"
+        data-sap-ui-compatVersion="edge"
+        data-sap-ui-async="true"
+        data-sap-ui-resourceroots='{"mundial": "./"}'
+        data-sap-ui-oninit="module:sap/ui/core/ComponentSupport">
+    </script>
+    <style>
+        /* Ancla la cadena de alturas desde la raíz del documento.
+           Sin esto, height:100% se calcula sobre "auto" = 0px
+           y la app renderiza pero queda invisible. */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body class="sapUiBody">
+
+    <!-- ComponentSupport lee los data-* y arranca el componente.
+         data-height="100%" es OBLIGATORIO: sin eso el div colapsa
+         y la app se ve como una franja de 0px. -->
+    <div
+        data-sap-ui-component
+        data-name="mundial"
+        data-id="container"
+        data-settings='{"id": "mundial"}'
+        data-height="100%">
+    </div>
+
+</body>
+</html>

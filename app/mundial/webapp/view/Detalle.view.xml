@@ -1,0 +1,61 @@
+<mvc:View
+    controllerName="mundial.controller.Detalle"
+    xmlns="sap.m"
+    xmlns:mvc="sap.ui.core.mvc"
+    displayBlock="true">
+
+    <Page
+        id="pageDetalle"
+        title="{nombre}"
+        showNavButton="true"
+        navButtonPress="onNavBack">
+
+        <content>
+
+            <!-- Bindings RELATIVOS: {nombre}, {seleccionId}...
+                 Se resuelven contra el element binding que
+                 el controller pone sobre la vista. -->
+            <ObjectHeader
+                title="{nombre}"
+                number="{seleccionId}"
+                numberUnit="{i18n>colId}"
+                class="sapUiSmallMarginBottom">
+                <attributes>
+                    <ObjectAttribute title="{i18n>colConfederacion}" text="{confederacion}"/>
+                    <ObjectAttribute title="{i18n>colGrupo}"         text="{grupo}"/>
+                </attributes>
+            </ObjectHeader>
+
+            <!-- items="{jugadores}" : binding relativo SIN barra inicial.
+                 UI5 lo traduce a  /Selecciones('111')/jugadores
+                 Es la navegación de la Composition del schema.cds. -->
+            <Table id="tablaJugadores" items="{jugadores}">
+
+                <headerToolbar>
+                    <Toolbar>
+                        <Title text="{i18n>tituloPlantel}"/>
+                        <ToolbarSpacer/>
+                    </Toolbar>
+                </headerToolbar>
+
+                <columns>
+                    <Column width="6em"><Text text="{i18n>colDorsal}"/></Column>
+                    <Column><Text text="{i18n>colNombre}"/></Column>
+                    <Column><Text text="{i18n>colPosicion}"/></Column>
+                </columns>
+
+                <items>
+                    <ColumnListItem>
+                        <cells>
+                            <ObjectNumber number="{dorsal}"/>
+                            <Text text="{nombre}"/>
+                            <Text text="{posicion}"/>
+                        </cells>
+                    </ColumnListItem>
+                </items>
+
+            </Table>
+
+        </content>
+    </Page>
+</mvc:View>

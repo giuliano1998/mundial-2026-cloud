@@ -1,0 +1,57 @@
+<mvc:View
+    controllerName="mundial.controller.Selecciones"
+    xmlns="sap.m"
+    xmlns:mvc="sap.ui.core.mvc"
+    displayBlock="true">
+
+    <Page id="pageSelecciones" title="{i18n>appTitle}">
+        <content>
+
+            <!-- items="{/Selecciones}" : binding ABSOLUTO (arranca con /)
+                 Es el nombre del entity set en el servicio CAP.
+                 Compará: en on-prem era "{/SeleccionSet}" -->
+            <Table
+                id="tablaSelecciones"
+                items="{
+                    path: '/Selecciones',
+                    sorter: { path: 'nombre' }
+                }"
+                growing="true"
+                growingThreshold="20">
+
+                <headerToolbar>
+                    <Toolbar>
+                        <Title text="{i18n>tituloSelecciones}"/>
+                        <ToolbarSpacer/>
+                        <SearchField
+                            width="20rem"
+                            placeholder="{i18n>placeholderBuscar}"
+                            liveChange="onBuscar"/>
+                    </Toolbar>
+                </headerToolbar>
+
+                <columns>
+                    <Column width="6em"><Text text="{i18n>colId}"/></Column>
+                    <Column><Text text="{i18n>colSeleccion}"/></Column>
+                    <Column><Text text="{i18n>colConfederacion}"/></Column>
+                    <Column width="6em"><Text text="{i18n>colGrupo}"/></Column>
+                </columns>
+
+                <items>
+                    <!-- type="Navigation" dibuja el chevron y habilita press.
+                         Sin esto, tocar la fila no dispara nada. -->
+                    <ColumnListItem type="Navigation" press="onSeleccionPress">
+                        <cells>
+                            <Text text="{seleccionId}"/>
+                            <Text text="{nombre}"/>
+                            <Text text="{confederacion}"/>
+                            <Text text="{grupo}"/>
+                        </cells>
+                    </ColumnListItem>
+                </items>
+
+            </Table>
+
+        </content>
+    </Page>
+</mvc:View>

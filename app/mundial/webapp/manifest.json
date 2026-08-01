@@ -1,0 +1,101 @@
+{
+  "_version": "1.60.0",
+  "sap.app": {
+    "id": "mundial",
+    "type": "application",
+    "title": "Mundial 2026 - Cloud",
+    "description": "Selecciones y jugadores sobre CAP + OData V4",
+    "applicationVersion": {
+      "version": "1.0.0"
+    },
+    "dataSources": {
+      "mainService": {
+        "uri": "/odata/v4/mundial/",
+        "type": "OData",
+        "settings": {
+          "odataVersion": "4.0"
+        }
+      }
+    }
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "deviceTypes": {
+      "desktop": true,
+      "tablet": true,
+      "phone": true
+    }
+  },
+  "sap.ui5": {
+    "rootView": {
+      "viewName": "mundial.view.App",
+      "type": "XML",
+      "id": "app",
+      "async": true
+    },
+    "dependencies": {
+      "minUI5Version": "1.120.0",
+      "libs": {
+        "sap.m": {},
+        "sap.ui.core": {},
+        "sap.ui.layout": {}
+      }
+    },
+    "models": {
+      "i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "settings": {
+          "bundleName": "mundial.i18n.i18n"
+        }
+      },
+      "": {
+        "dataSource": "mainService",
+        "settings": {
+          "operationMode": "Server",
+          "autoExpandSelect": true,
+          "earlyRequests": true,
+          "groupId": "$auto",
+          "updateGroupId": "$auto"
+        }
+      }
+    },
+    "routing": {
+      "config": {
+        "routerClass": "sap.m.routing.Router",
+        "viewType": "XML",
+        "viewPath": "mundial.view",
+        "controlId": "appContainer",
+        "controlAggregation": "pages",
+        "async": true
+      },
+      "routes": [
+        {
+          "name": "RouteSelecciones",
+          "pattern": "",
+          "target": [
+            "TargetSelecciones"
+          ]
+        },
+        {
+          "name": "RouteDetalle",
+          "pattern": "seleccion/{seleccionId}",
+          "target": [
+            "TargetDetalle"
+          ]
+        }
+      ],
+      "targets": {
+        "TargetSelecciones": {
+          "viewId": "Selecciones",
+          "viewName": "Selecciones",
+          "viewLevel": 1
+        },
+  "TargetDetalle": {
+    "viewId": "Detalle",
+    "viewName": "Detalle",
+    "viewLevel": 2
+  }
+      }
+    }
+  }
+}
