@@ -1,0 +1,40 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:l="sap.ui.layout.form">
+
+    <!-- UN solo diálogo para alta Y edición.
+         Lo que cambia es el título y qué hace Guardar. -->
+    <Dialog
+        title="{ui>/tituloDialog}"
+        contentWidth="30rem">
+
+        <content>
+            <l:SimpleForm layout="ResponsiveGridLayout" editable="true">
+
+                <Label text="{i18n>colNombre}" required="true"/>
+                <Input value="{ui>/jugador/nombre}" maxLength="30"/>
+
+                <Label text="{i18n>colDorsal}"/>
+                <Input value="{ui>/jugador/dorsal}" maxLength="2"/>
+
+                <Label text="{i18n>colPosicion}"/>
+                <Select selectedKey="{ui>/jugador/posicion}">
+                    <core:Item key="ARQ" text="Arquero"/>
+                    <core:Item key="DEF" text="Defensor"/>
+                    <core:Item key="MED" text="Mediocampista"/>
+                    <core:Item key="DEL" text="Delantero"/>
+                </Select>
+
+            </l:SimpleForm>
+        </content>
+
+        <beginButton>
+            <Button text="{i18n>btnGuardar}" type="Emphasized" press="onGuardarJugador"/>
+        </beginButton>
+        <endButton>
+            <Button text="{i18n>btnCancelar}" press="onCancelarDialog"/>
+        </endButton>
+
+    </Dialog>
+</core:FragmentDefinition>
