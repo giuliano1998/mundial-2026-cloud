@@ -1,0 +1,63 @@
+### Crear un jugador
+POST http://localhost:4004/odata/v4/mundial/Jugadores
+Content-Type: application/json
+
+{
+  "jugadorId": "000012",
+  "seleccionId": "111",
+  "nombre": "DE PAUL",
+  "posicion": "MED",
+  "dorsal": "07"
+}
+
+### Modificar
+PATCH http://localhost:4004/odata/v4/mundial/Jugadores(jugadorId='000012',seleccionId='111')
+Content-Type: application/json
+
+{ "posicion": "VOL" }
+
+### Borrar
+DELETE http://localhost:4004/odata/v4/mundial/Jugadores(jugadorId='000012',seleccionId='111')
+
+
+
+### 1. Crear un jugador (sin mandar jugadorId)
+POST http://localhost:4004/odata/v4/mundial/Jugadores
+Content-Type: application/json
+
+{
+  "seleccionId": "111",
+  "nombre": "DE PAUL",
+  "posicion": "MED",
+  "dorsal": "07"
+}
+
+### 2. Validación: sin nombre → debe dar 400
+POST http://localhost:4004/odata/v4/mundial/Jugadores
+Content-Type: application/json
+
+{
+  "seleccionId": "111",
+  "posicion": "DEF",
+  "dorsal": "04"
+}
+
+### 3. Validación: selección inexistente → debe dar 400
+POST http://localhost:4004/odata/v4/mundial/Jugadores
+Content-Type: application/json
+
+{
+  "seleccionId": "999",
+  "nombre": "FANTASMA",
+  "posicion": "DEL",
+  "dorsal": "01"
+}
+
+### 4. Modificar (PATCH, no PUT)
+PATCH http://localhost:4004/odata/v4/mundial/Jugadores(jugadorId='000012',seleccionId='111')
+Content-Type: application/json
+
+{ "posicion": "VOL" }
+
+### 5. Borrar
+DELETE http://localhost:4004/odata/v4/mundial/Jugadores(jugadorId='000012',seleccionId='111')
