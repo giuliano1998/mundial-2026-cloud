@@ -1,10 +1,18 @@
 {
+  "welcomeFile": "/mundial/index.html",
+  "authenticationMethod": "route",
   "routes": [
     {
-      "source": "^/(.*)$",
-      "target": "$1",
+      "source": "^/mundial/(.*)$",
+      "localDir": "resources/mundial",
+      "authenticationType": "xsuaa"
+    },
+    {
+      "source": "^/odata/(.*)$",
+      "target": "/odata/$1",
       "destination": "srv-api",
-      "csrfProtection": true
+      "csrfProtection": true,
+      "authenticationType": "xsuaa"
     }
   ]
 }

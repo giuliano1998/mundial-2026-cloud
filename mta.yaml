@@ -36,9 +36,20 @@ modules:
       buildpack: nodejs_buildpack
     requires:
       - name: mundialcloud-db
+
   - name: mundialcloud
     type: approuter.nodejs
     path: app/router
+    # ↓↓↓ ESTE BLOQUE ES LO NUEVO ↓↓↓
+    # Copia la app UI5 dentro del approuter antes de empaquetarlo.
+    # Los comandos se ejecutan parados en app/router/
+    build-parameters:
+      builder: custom
+      commands:
+        - rm -rf resources/mundial
+        - mkdir -p resources/mundial
+        - cp -r ../mundial/webapp/* resources/mundial/
+    # ↑↑↑ FIN DEL BLOQUE NUEVO ↑↑↑
     parameters:
       keep-existing-routes: true
       disk-quota: 256M
