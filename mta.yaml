@@ -48,7 +48,7 @@ modules:
       commands:
         - rm -rf resources/mundial
         - mkdir -p resources/mundial
-        - cp -r ../mundial/webapp/* resources/mundial/
+        - cp -r ../mundial/webapp/. resources/mundial/
     # ↑↑↑ FIN DEL BLOQUE NUEVO ↑↑↑
     parameters:
       keep-existing-routes: true

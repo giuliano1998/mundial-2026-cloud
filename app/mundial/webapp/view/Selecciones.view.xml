@@ -33,8 +33,11 @@
                 <columns>
                     <Column width="6em"><Text text="{i18n>colId}"/></Column>
                     <Column><Text text="{i18n>colSeleccion}"/></Column>
-                    <Column><Text text="{i18n>colConfederacion}"/></Column>
-                    <Column width="6em"><Text text="{i18n>colGrupo}"/></Column>
+                    <Column width="12em"><Text text="{i18n>colConfederacion}"/></Column>
+                    <Column width="4em"><Text text="{i18n>colGrupo}"/></Column>
+                    <Column width="14em" hAlign="Center">
+                        <Text text="{i18n>colMundiales}"/>
+                    </Column>
                 </columns>
 
                 <items>
@@ -44,8 +47,42 @@
                         <cells>
                             <Text text="{seleccionId}"/>
                             <Text text="{nombre}"/>
-                            <Text text="{confederacion}"/>
+
+                            <!-- El texto sigue siendo el valor CRUDO (UEFA).
+                                 Solo el color y el ícono salen del formatter. -->
+                            <ObjectStatus
+                                text="{confederacion}"
+                                state="{
+                                    path: 'confederacion',
+                                    formatter: '.formatter.confederacionEstado'
+                                }"
+                                icon="{
+                                    path: 'confederacion',
+                                    formatter: '.formatter.confederacionIcono'
+                                }"/>
+
                             <Text text="{grupo}"/>
+
+                            <!-- HBox para poner estrellas y texto en la misma línea.
+                                 Una celda admite UN control: si querés dos,
+                                 los envolvés en un contenedor. -->
+                            <HBox alignItems="Center" justifyContent="Center">
+                                <RatingIndicator
+                                    maxValue="5"
+                                    value="{mundialesGanados}"
+                                    editable="false"
+                                    iconSize="1rem"
+                                    class="sapUiTinyMarginEnd"
+                                    tooltip="{
+                                        path: 'mundialesGanados',
+                                        formatter: '.formatter.mundialesTexto'
+                                    }"/>
+                                <Text text="{
+                                    path: 'mundialesGanados',
+                                    formatter: '.formatter.mundialesTexto'
+                                }"/>
+                            </HBox>
+
                         </cells>
                     </ColumnListItem>
                 </items>

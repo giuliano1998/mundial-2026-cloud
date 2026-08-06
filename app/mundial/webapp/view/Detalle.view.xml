@@ -4,9 +4,10 @@
     xmlns:mvc="sap.ui.core.mvc"
     displayBlock="true">
 
+    <!-- Sin title: el ObjectHeader ya muestra el nombre.
+         Tenerlo en los dos lados duplica "ARGENTINA" en pantalla. -->
     <Page
         id="pageDetalle"
-        title="{nombre}"
         showNavButton="true"
         navButtonPress="onNavBack">
 
@@ -18,68 +19,118 @@
             <ObjectHeader
                 title="{nombre}"
                 number="{seleccionId}"
-                numberUnit="{i18n>colId}"
-                class="sapUiSmallMarginBottom">
+                numberUnit="{i18n>colId}">
+
+                <!-- attributes: SOLO acepta ObjectAttribute (texto plano) -->
                 <attributes>
-                    <ObjectAttribute title="{i18n>colConfederacion}" text="{confederacion}"/>
-                    <ObjectAttribute title="{i18n>colGrupo}"         text="{grupo}"/>
+                    <ObjectAttribute title="{i18n>colGrupo}" text="{grupo}"/>
                 </attributes>
+
+                <!-- statuses: acepta ObjectStatus. Acá va lo que lleva
+                     color e ícono. La confederación se movió de
+                     attributes a statuses justamente por eso. -->
+                <statuses>
+                    <ObjectStatus
+                        text="{confederacion}"
+                        state="{
+                            path: 'confederacion',
+                            formatter: '.formatter.confederacionEstado'
+                        }"
+                        icon="{
+                            path: 'confederacion',
+                            formatter: '.formatter.confederacionIcono'
+                        }"/>
+                </statuses>
+
             </ObjectHeader>
+
+            <!-- RatingIndicator NO entra en las aggregations del
+                 ObjectHeader (están tipadas). Va al lado, no adentro. -->
+            <HBox
+                alignItems="Center"
+                class="sapUiSmallMarginBegin sapUiSmallMarginBottom">
+                <Label text="{i18n>colMundiales}" class="sapUiTinyMarginEnd"/>
+                <RatingIndicator
+                    maxValue="5"
+                    value="{mundialesGanados}"
+                    editable="false"
+                    iconSize="1.2rem"
+                    class="sapUiTinyMarginEnd"/>
+                <Text text="{
+                    path: 'mundialesGanados',
+                    formatter: '.formatter.mundialesTexto'
+                }"/>
+            </HBox>
 
             <!-- items="{jugadores}" : binding relativo SIN barra inicial.
                  UI5 lo traduce a  /Selecciones('111')/jugadores
                  Es la navegación de la Composition del schema.cds. -->
             <Table id="tablaJugadores" items="{jugadores}">
 
-    <headerToolbar>
-        <Toolbar>
-            <Title text="{i18n>tituloPlantel}"/>
-            <ToolbarSpacer/>
-            <!-- N = Nuevo. Va en el toolbar, no por fila:
-                 es una acción sobre la COLECCIÓN. -->
-            <Button
-                icon="sap-icon://add"
-                type="Emphasized"
-                tooltip="{i18n>btnNuevo}"
-                press="onNuevoJugador"/>
-        </Toolbar>
-    </headerToolbar>
+                <headerToolbar>
+                    <Toolbar>
+                        <Title text="{i18n>tituloPlantel}"/>
+                        <ToolbarSpacer/>
+                        <!-- N = Nuevo. Va en el toolbar, no por fila:
+                             es una acción sobre la COLECCIÓN. -->
+                        <Button
+                            icon="sap-icon://add"
+                            type="Emphasized"
+                            tooltip="{i18n>btnNuevo}"
+                            press="onNuevoJugador"/>
+                    </Toolbar>
+                </headerToolbar>
 
-    <columns>
-        <Column width="5em"><Text text="{i18n>colDorsal}"/></Column>
-        <Column><Text text="{i18n>colNombre}"/></Column>
-        <Column><Text text="{i18n>colPosicion}"/></Column>
-        <Column width="8em" hAlign="End"><Text text="{i18n>colAcciones}"/></Column>
-    </columns>
+                <columns>
+                    <Column width="5em"><Text text="{i18n>colDorsal}"/></Column>
+                    <Column><Text text="{i18n>colNombre}"/></Column>
+                    <Column><Text text="{i18n>colPosicion}"/></Column>
+                    <Column width="8em"><Text text="{i18n>colAltura}"/></Column>
+                    <Column width="8em" hAlign="End"><Text text="{i18n>colAcciones}"/></Column>
+                </columns>
 
-    <items>
-        <ColumnListItem>
-            <cells>
-                <ObjectNumber number="{dorsal}"/>
-                <Text text="{nombre}"/>
-                <Text text="{posicion}"/>
+                <items>
+                    <ColumnListItem>
+                        <cells>
+                            <ObjectNumber number="{dorsal}"/>
+                            <Text text="{nombre}"/>
+                            <Text text="{posicion}"/>
 
-                <!-- E y B = acciones sobre UNA fila.
-                     Cada botón hereda el binding context de su
-                     ColumnListItem: por eso el controller sabe
-                     de qué jugador se trata sin pasarle ningún ID. -->
-                <HBox justifyContent="End">
-                    <Button
-                        icon="sap-icon://edit"
-                        type="Transparent"
-                        tooltip="{i18n>btnEditar}"
-                        press="onEditarJugador"/>
-                    <Button
-                        icon="sap-icon://delete"
-                        type="Transparent"
-                        tooltip="{i18n>btnBorrar}"
-                        press="onBorrarJugador"/>
-                </HBox>
-            </cells>
-        </ColumnListItem>
-    </items>
+                            <!-- Contexto = un JUGADOR.
+                                 Solo campos de Jugadores: nada de
+                                 confederacion acá. -->
+                            <ObjectStatus
+                                text="{
+                                    path: 'altura',
+                                    formatter: '.formatter.alturaTexto'
+                                }"
+                                state="{
+                                    path: 'altura',
+                                    formatter: '.formatter.alturaEstado'
+                                }"/>
 
-</Table>
+                            <!-- E y B = acciones sobre UNA fila.
+                                 Cada botón hereda el binding context de su
+                                 ColumnListItem: por eso el controller sabe
+                                 de qué jugador se trata sin pasarle ningún ID. -->
+                            <HBox justifyContent="End">
+                                <Button
+                                    icon="sap-icon://edit"
+                                    type="Transparent"
+                                    tooltip="{i18n>btnEditar}"
+                                    press="onEditarJugador"/>
+                                <Button
+                                    icon="sap-icon://delete"
+                                    type="Transparent"
+                                    tooltip="{i18n>btnBorrar}"
+                                    press="onBorrarJugador"/>
+                            </HBox>
+
+                        </cells>
+                    </ColumnListItem>
+                </items>
+
+            </Table>
 
         </content>
     </Page>

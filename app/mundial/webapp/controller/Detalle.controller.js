@@ -5,11 +5,14 @@ sap.ui.define([
     "sap/ui/core/Fragment",
     "sap/ui/model/json/JSONModel",
     "sap/m/MessageBox",
-    "sap/m/MessageToast"
-], function (Controller, UIComponent, History, Fragment, JSONModel, MessageBox, MessageToast) {
+    "sap/m/MessageToast",
+    "mundial/model/formatter" 
+], function (Controller, UIComponent, History, Fragment, JSONModel, MessageBox, MessageToast, formatter) {
     "use strict";
 
     return Controller.extend("mundial.controller.Detalle", {
+
+        formatter: formatter, 
 
         /* ==================================================================
          * CICLO DE VIDA

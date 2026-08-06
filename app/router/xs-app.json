@@ -4,6 +4,7 @@
   "routes": [
     {
       "source": "^/mundial/(.*)$",
+      "target": "$1",
       "localDir": "resources/mundial",
       "authenticationType": "xsuaa"
     },

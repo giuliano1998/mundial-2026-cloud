@@ -2,12 +2,15 @@ sap.ui.define([
     "sap/ui/core/mvc/Controller",
     "sap/ui/core/UIComponent",
     "sap/ui/model/Filter",
-    "sap/ui/model/FilterOperator"
-], function (Controller, UIComponent, Filter, FilterOperator) {
+    "sap/ui/model/FilterOperator",
+    "mundial/model/formatter" 
+], function (Controller, UIComponent, Filter, FilterOperator, formatter) {
     "use strict";
 
     return Controller.extend("mundial.controller.Selecciones", {
 
+         formatter: formatter,  
+         
         onBuscar: function (oEvent) {
             var sQuery  = oEvent.getParameter("newValue");
             var aFilter = [];

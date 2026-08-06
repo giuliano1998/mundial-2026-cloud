@@ -9,7 +9,7 @@ entity Selecciones {
       nombre        : String(40);
       confederacion : String(10);
       grupo         : String(1);
-
+      mundialesGanados : Integer default 0; // ← se suma un campo para mejor diseño
       // Lado "1" de la relación 1:N.
       // Composition = los jugadores PERTENECEN a la selección.
       jugadores     : Composition of many Jugadores
@@ -27,6 +27,7 @@ entity Jugadores {
       nombre      : String(40);
       posicion    : String(3);
       dorsal      : String(2);
+      altura      : Decimal(3,2); // ← se suma un campo para mejor logica
 
       // Lado "N". Association = referencia hacia el padre.
       seleccion   : Association to Selecciones
