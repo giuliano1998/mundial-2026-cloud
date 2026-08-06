@@ -1,5 +1,17 @@
 const cds = require('@sap/cds');
 
+// Traducción de valor técnico → valor de presentación.
+// En una app real esto saldría de una entidad de textos con
+// 'localized', no de un objeto hardcodeado.
+const CONFEDERACIONES = {
+    UEFA:     'Europa',
+    CONMEBOL: 'Sudamérica',
+    CONCACAF: 'Norte y Centroamérica',
+    CAF:      'África',
+    AFC:      'Asia',
+    OFC:      'Oceanía'
+};
+
 /**
  * Lógica de negocio del MundialService.
  * Equivale a la clase ZCL_ZGR_MUNDIAL_DPC_EXT del track on-premise.
@@ -11,8 +23,50 @@ module.exports = class MundialService extends cds.ApplicationService {
 
     init() {
 
-        // Las entidades del servicio, desestructuradas del modelo
+        // SIEMPRE PRIMERO. Todo lo de abajo depende de estas constantes.
+        // Con const/let, usarlas antes de esta línea tira
+        // "Cannot access 'X' before initialization" (temporal dead zone).
         const { Jugadores, Selecciones } = this.entities;
+
+        /* ==============================================================
+         * READ de Selecciones — transformación de salida
+         *
+         * after: el dato YA se leyó de la base. Acá solo se modifica
+         * el resultado antes de serializarlo a OData.
+         *
+         * En ABAP esto habría sido redefinir GET_ENTITYSET ENTERO.
+         * Acá son 6 líneas: el SELECT, el $filter, el $orderby y el
+         * paginado los sigue haciendo CAP.
+         * ============================================================== */
+        this.after('READ', Selecciones, (data) => {
+
+            // El handler recibe un ARRAY en lecturas de colección
+            // y un OBJETO en lecturas de una entidad (/Selecciones('111')).
+            // Sin esta normalización, el deep-link revienta.
+            const filas = Array.isArray(data) ? data : [data];
+
+            filas.forEach((fila) => {
+                // Guarda defensiva: con autoExpandSelect, si la vista
+                // no usa 'confederacion' el campo directamente no viene.
+                if (fila && fila.confederacion) {
+
+                    // Se LLENA un campo virtual nuevo. NO se pisa
+                    // 'confederacion': el valor técnico queda intacto
+                    // para que el $filter y el $orderby sigan andando.
+                    fila.confederacionTexto = CONFEDERACIONES[fila.confederacion]
+                                           || fila.confederacion;
+
+                    // ── Paso 2 del ejercicio (para ver el error) ──
+                    // Descomentar esto y comentar lo de arriba:
+                    // fila.confederacion = CONFEDERACIONES[fila.confederacion]
+                    //                   || fila.confederacion;
+                    // Resultado: la tabla muestra "Europa" pero el
+                    // FilterBar sigue mandando 'UEFA'. Y si alineás el
+                    // Select a "Europa", el $filter busca un valor que
+                    // no existe en la base → cero resultados.
+                }
+            });
+        });
 
         /* ==============================================================
          * CREATE de Jugadores

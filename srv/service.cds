@@ -1,12 +1,14 @@
 using mundial from '../db/schema';
 
-/**
- * Servicio OData V4 del Mundial.
- * Equivale al proyecto SEGW ZGR_MUNDIAL.
- */
 service MundialService {
 
-  entity Selecciones as projection on mundial.Selecciones;
-  entity Jugadores   as projection on mundial.Jugadores;
+  entity Selecciones as projection on mundial.Selecciones {
+    *,
+    // virtual = NO se persiste, NO tiene columna en la base.
+    // La llena el handler. Existe solo en el servicio.
+    // Consecuencia: no se puede filtrar ni ordenar por este campo.
+    virtual null as confederacionTexto : String(30)
+  };
 
+  entity Jugadores as projection on mundial.Jugadores;
 }

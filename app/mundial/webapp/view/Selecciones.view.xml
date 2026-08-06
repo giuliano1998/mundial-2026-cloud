@@ -35,10 +35,10 @@
                                  necesita la opción de no filtrar. -->
                             <Select id="filtroConfederacion" width="100%">
                                 <core:Item key=""         text="{i18n>filtroTodas}"/>
-                                <core:Item key="UEFA"     text="UEFA"/>
-                                <core:Item key="CONMEBOL" text="CONMEBOL"/>
-                                <core:Item key="CONCACAF" text="CONCACAF"/>
-                                <core:Item key="CAF"      text="CAF"/>
+                                <core:Item key="UEFA"     text="Europa"/>
+                                <core:Item key="CONMEBOL" text="Sudamérica"/>
+                                <core:Item key="CONCACAF" text="Norte y Centroamérica"/>
+                                <core:Item key="CAF"      text="África"/>
                             </Select>
                         </fb:control>
                     </fb:FilterGroupItem>
@@ -86,7 +86,7 @@
                 <columns>
                     <Column width="6em"><Text text="{i18n>colId}"/></Column>
                     <Column><Text text="{i18n>colSeleccion}"/></Column>
-                    <Column width="12em"><Text text="{i18n>colConfederacion}"/></Column>
+                    <Column width="16em"><Text text="{i18n>colConfederacion}"/></Column>
                     <Column width="4em"><Text text="{i18n>colGrupo}"/></Column>
                     <Column width="14em" hAlign="Center">
                         <Text text="{i18n>colMundiales}"/>
@@ -106,7 +106,7 @@
                                  Si acá tradujéramos UEFA→Europa, el FilterBar
                                  filtraría por un valor que no existe en la base. -->
                             <ObjectStatus
-                                text="{confederacion}"
+                                text="{confederacionTexto}"
                                 state="{
                                     path: 'confederacion',
                                     formatter: '.formatter.confederacionEstado'
