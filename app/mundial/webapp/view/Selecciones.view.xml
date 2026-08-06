@@ -77,11 +77,16 @@
                 <!-- El SearchField se fue al FilterBar.
                      Acá solo queda el título. -->
                 <headerToolbar>
-                    <Toolbar>
-                        <Title text="{i18n>tituloSelecciones}"/>
-                        <ToolbarSpacer/>
-                    </Toolbar>
-                </headerToolbar>
+    <Toolbar>
+        <Title text="{i18n>tituloSelecciones}"/>
+        <ToolbarSpacer/>
+        <Button
+            icon="sap-icon://pie-chart"
+            text="{i18n>btnPorcentajes}"
+            type="Transparent"
+            press="onVerPorcentajes"/>
+    </Toolbar>
+</headerToolbar>
 
                 <columns>
                     <Column width="6em"><Text text="{i18n>colId}"/></Column>
