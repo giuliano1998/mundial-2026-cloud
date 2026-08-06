@@ -55,15 +55,6 @@ module.exports = class MundialService extends cds.ApplicationService {
                     // para que el $filter y el $orderby sigan andando.
                     fila.confederacionTexto = CONFEDERACIONES[fila.confederacion]
                                            || fila.confederacion;
-
-                    // ── Paso 2 del ejercicio (para ver el error) ──
-                    // Descomentar esto y comentar lo de arriba:
-                    // fila.confederacion = CONFEDERACIONES[fila.confederacion]
-                    //                   || fila.confederacion;
-                    // Resultado: la tabla muestra "Europa" pero el
-                    // FilterBar sigue mandando 'UEFA'. Y si alineás el
-                    // Select a "Europa", el $filter busca un valor que
-                    // no existe en la base → cero resultados.
                 }
             });
         });
@@ -76,11 +67,10 @@ module.exports = class MundialService extends cds.ApplicationService {
 
             const datos = req.data;
 
-            // ---- 1. Validaciones de negocio -------------------------
+            // ---- 1. Validaciones de obligatoriedad ------------------
             // SIEMPRE en el backend, aunque el front también valide:
             // el front se puede saltear con curl o Postman.
             if (!datos.nombre) {
-                // req.error acumula el error y devuelve HTTP 400.
                 // El 3er argumento marca QUÉ campo falló: UI5 lo usa
                 // para resaltar el input correspondiente.
                 return req.error(400, 'El nombre es obligatorio', 'nombre');
@@ -90,7 +80,7 @@ module.exports = class MundialService extends cds.ApplicationService {
                 return req.error(400, 'Debe indicar la selección', 'seleccionId');
             }
 
-            // Integridad referencial a nivel aplicación
+            // ---- 2. Integridad referencial --------------------------
             const seleccion = await SELECT.one
                 .from(Selecciones)
                 .where({ seleccionId: datos.seleccionId });
@@ -99,11 +89,42 @@ module.exports = class MundialService extends cds.ApplicationService {
                 return req.error(400, 'La selección indicada no existe', 'seleccionId');
             }
 
-            // ---- 2. Generar el próximo jugadorId --------------------
+            // ---- 3. El dorsal no puede estar ocupado ----------------
+            // LA validación que no se puede hacer en el front: requiere
+            // conocer el estado actual de la base.
+            // Va acá, al nivel de las demás: si estuviera dentro del if
+            // de generación de ID, un POST que mande jugadorId se la
+            // saltearía entera.
+            if (datos.dorsal) {
+
+                // Los DOS campos en el where: el 10 puede existir en
+                // Brasil y en Argentina a la vez. La unicidad es de
+                // la COMBINACIÓN, no del dorsal solo.
+                const ocupado = await SELECT.one
+                    .from(Jugadores)
+                    .where({
+                        seleccionId: datos.seleccionId,
+                        dorsal:      datos.dorsal
+                    });
+
+                if (ocupado) {
+                    // El mensaje dice QUIÉN lo tiene: ya tenemos el
+                    // registro en la mano, no cuesta una query extra.
+                    return req.error(
+                        400,
+                        `El dorsal ${datos.dorsal} no está disponible: ya lo usa ${ocupado.nombre}`,
+                        'dorsal'
+                    );
+                }
+            }
+
+            // ---- 4. Generar el próximo jugadorId --------------------
             // Solo si el cliente no lo mandó.
             if (!datos.jugadorId) {
 
-                // SELECT MAX(jugadorId) — el mismo enfoque que en ABAP
+                // SELECT MAX(jugadorId) — el mismo enfoque que en ABAP.
+                // Caveat: no soporta concurrencia y reutiliza IDs tras
+                // un borrado. En productivo iría UUID o secuencia.
                 const fila = await SELECT.one
                     .from(Jugadores)
                     .columns('max(jugadorId) as maxId');
@@ -125,19 +146,47 @@ module.exports = class MundialService extends cds.ApplicationService {
         /* ==============================================================
          * UPDATE de Jugadores
          * Equivale a JUGADORSET_UPDATE_ENTITY
+         *
+         * async porque ahora consulta la base para la unicidad.
          * ============================================================== */
-        this.before('UPDATE', Jugadores, (req) => {
+        this.before('UPDATE', Jugadores, async (req) => {
 
             // OJO: en un PATCH, req.data trae SOLO los campos enviados.
-            // Por eso validamos únicamente si el campo viene informado.
-            // Si el cliente no manda "nombre", no lo está cambiando.
+            // Por eso se valida únicamente si el campo viene informado.
             if ('nombre' in req.data && !req.data.nombre) {
                 return req.error(400, 'El nombre es obligatorio', 'nombre');
+            }
+
+            if ('dorsal' in req.data) {
+
+                // req.params trae las claves de la URL:
+                // /Jugadores(jugadorId='000004',seleccionId='111')
+                // Es un array: el último elemento es la entidad que se toca.
+                const claves = req.params[req.params.length - 1];
+
+                const ocupado = await SELECT.one
+                    .from(Jugadores)
+                    .where({
+                        seleccionId: claves.seleccionId,
+                        dorsal:      req.data.dorsal
+                    });
+
+                // El !== es lo que hace que esto funcione: si el
+                // "ocupado" es él mismo, no hay conflicto. Sin esta
+                // condición, guardar sin cambiar el dorsal falla
+                // diciendo que el dorsal lo usa... él mismo.
+                if (ocupado && ocupado.jugadorId !== claves.jugadorId) {
+                    return req.error(
+                        400,
+                        `El dorsal ${req.data.dorsal} no está disponible: ya lo usa ${ocupado.nombre}`,
+                        'dorsal'
+                    );
+                }
             }
         });
 
         // OBLIGATORIO: registra los handlers del framework.
-        // Si te lo olvidás, el servicio no responde nada.
+        // Sin esto el servicio no responde nada.
         return super.init();
     }
 };

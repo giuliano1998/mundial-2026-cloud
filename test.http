@@ -61,3 +61,43 @@ Content-Type: application/json
 
 ### 5. Borrar
 DELETE http://localhost:4004/odata/v4/mundial/Jugadores(jugadorId='000012',seleccionId='111')
+
+
+### El caso de Jota: dorsal ocupado (Messi tiene el 10 en Argentina)
+POST http://localhost:4004/odata/v4/mundial/Jugadores
+Content-Type: application/json
+
+{
+  "seleccionId": "111",
+  "nombre": "PRUEBA",
+  "posicion": "DEL",
+  "dorsal": "10"
+}
+
+### Control: dorsal 23 en Brasil — libre, debe pasar
+POST http://localhost:4004/odata/v4/mundial/Jugadores
+Content-Type: application/json
+
+{
+  "seleccionId": "222",
+  "nombre": "PRUEBA BRASIL",
+  "posicion": "DEF",
+  "dorsal": "23"
+}
+
+### Editar solo el nombre, dorsal sin tocar. Debe pasar (204).
+PATCH http://localhost:4004/odata/v4/mundial/Jugadores(jugadorId='000004',seleccionId='111')
+Content-Type: application/json
+
+{
+  "nombre": "LIONEL MESSI",
+  "dorsal": "10"
+}
+
+### Cambiar el dorsal de Dibu al 10 de Messi. Debe fallar (400).
+PATCH http://localhost:4004/odata/v4/mundial/Jugadores(jugadorId='000005',seleccionId='111')
+Content-Type: application/json
+
+{
+  "dorsal": "10"
+}
