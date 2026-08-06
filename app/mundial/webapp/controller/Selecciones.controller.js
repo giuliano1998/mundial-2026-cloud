@@ -11,22 +11,42 @@ sap.ui.define([
 
          formatter: formatter,  
          
-        onBuscar: function (oEvent) {
-            var sQuery  = oEvent.getParameter("newValue");
-            var aFilter = [];
+        /**
+ * Se dispara SOLO al apretar "Ir" (o Enter en el input).
+ * Acá se lee el estado de los controles y sale UNA request.
+ */
+onBuscar: function () {
+    var aFilters = [];
 
-            if (sQuery) {
-                aFilter.push(new Filter({
-                    filters: [
-                        new Filter("nombre", FilterOperator.Contains, sQuery),
-                        new Filter("confederacion", FilterOperator.Contains, sQuery)
-                    ],
-                    and: false
-                }));
-            }
+    var sConfederacion = this.byId("filtroConfederacion").getSelectedKey();
+    var sNombre        = this.byId("filtroNombre").getValue();
 
-            this.byId("tablaSelecciones").getBinding("items").filter(aFilter);
-        },
+    // Solo se agrega el filtro si hay valor.
+    // Array vacío = sin filtros = traer todo.
+    if (sConfederacion) {
+        aFilters.push(new Filter("confederacion", FilterOperator.EQ, sConfederacion));
+    }
+
+    if (sNombre) {
+        // toUpperCase(): los datos están en mayúsculas y en HANA
+        // el LIKE es case sensitive (en SQLite no: cuidado con eso).
+        aFilters.push(new Filter("nombre", FilterOperator.Contains, sNombre.toUpperCase()));
+    }
+
+    // Varios Filter sueltos en un array se combinan con AND.
+    this.byId("tablaSelecciones").getBinding("items").filter(aFilters);
+},
+
+/**
+ * Botón "Borrar" del FilterBar. Limpia los controles Y el binding:
+ * si solo limpiás los controles, la tabla queda filtrada y el
+ * usuario no entiende por qué faltan registros.
+ */
+onLimpiarFiltros: function () {
+    this.byId("filtroConfederacion").setSelectedKey("");
+    this.byId("filtroNombre").setValue("");
+    this.byId("tablaSelecciones").getBinding("items").filter([]);
+},
 
         /**
          * Navega al detalle de la selección tocada.

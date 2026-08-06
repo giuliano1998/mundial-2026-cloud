@@ -7,15 +7,15 @@
 
     <!-- Bootstrap de UI5: carga el framework desde el CDN de SAP -->
   <script
-        id="sap-ui-bootstrap"
-        src="https://ui5.sap.com/resources/sap-ui-core.js"
-        data-sap-ui-theme="sap_horizon"
-        data-sap-ui-libs="sap.m,sap.ui.core,sap.ui.layout"
-        data-sap-ui-compatVersion="edge"
-        data-sap-ui-async="true"
-        data-sap-ui-resourceroots='{"mundial": "./"}'
-        data-sap-ui-oninit="module:sap/ui/core/ComponentSupport">
-    </script>
+    id="sap-ui-bootstrap"
+    src="https://ui5.sap.com/resources/sap-ui-core.js"
+    data-sap-ui-theme="sap_horizon"
+    data-sap-ui-libs="sap.m,sap.ui.core,sap.ui.layout,sap.ui.comp"
+    data-sap-ui-compatVersion="edge"
+    data-sap-ui-async="true"
+    data-sap-ui-resourceroots='{"mundial": "./"}'
+    data-sap-ui-oninit="module:sap/ui/core/ComponentSupport">
+</script>
     <style>
         /* Ancla la cadena de alturas desde la raíz del documento.
            Sin esto, height:100% se calcula sobre "auto" = 0px

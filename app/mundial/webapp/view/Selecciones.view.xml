@@ -2,10 +2,65 @@
     controllerName="mundial.controller.Selecciones"
     xmlns="sap.m"
     xmlns:mvc="sap.ui.core.mvc"
+    xmlns:core="sap.ui.core"
+    xmlns:fb="sap.ui.comp.filterbar"
     displayBlock="true">
 
     <Page id="pageSelecciones" title="{i18n>appTitle}">
         <content>
+
+            <!-- FilterBar: acumula criterios y dispara UNA sola
+                 búsqueda cuando el usuario aprieta "Ir".
+                 Reemplaza al SearchField con liveChange, que iba
+                 al backend en cada tecla. -->
+            <fb:FilterBar
+                id="filterBarSelecciones"
+                useToolbar="false"
+                showRestoreButton="false"
+                search="onBuscar"
+                clear="onLimpiarFiltros">
+
+                <fb:filterGroupItems>
+
+                    <!-- FilterGroupItem = el envoltorio (label, nombre
+                         lógico, visibilidad). El control real va
+                         adentro de <fb:control>. -->
+                    <fb:FilterGroupItem
+                        groupName="general"
+                        name="confederacion"
+                        label="{i18n>colConfederacion}"
+                        visibleInFilterBar="true">
+                        <fb:control>
+                            <!-- key="" = "todas": un Select siempre
+                                 necesita la opción de no filtrar. -->
+                            <Select id="filtroConfederacion" width="100%">
+                                <core:Item key=""         text="{i18n>filtroTodas}"/>
+                                <core:Item key="UEFA"     text="UEFA"/>
+                                <core:Item key="CONMEBOL" text="CONMEBOL"/>
+                                <core:Item key="CONCACAF" text="CONCACAF"/>
+                                <core:Item key="CAF"      text="CAF"/>
+                            </Select>
+                        </fb:control>
+                    </fb:FilterGroupItem>
+
+                    <fb:FilterGroupItem
+                        groupName="general"
+                        name="nombre"
+                        label="{i18n>colSeleccion}"
+                        visibleInFilterBar="true">
+                        <fb:control>
+                            <!-- Input pelado, SIN liveChange.
+                                 submit = Enter, dispara lo mismo que "Ir". -->
+                            <Input
+                                id="filtroNombre"
+                                width="100%"
+                                placeholder="{i18n>placeholderBuscar}"
+                                submit="onBuscar"/>
+                        </fb:control>
+                    </fb:FilterGroupItem>
+
+                </fb:filterGroupItems>
+            </fb:FilterBar>
 
             <!-- items="{/Selecciones}" : binding ABSOLUTO (arranca con /)
                  Es el nombre del entity set en el servicio CAP.
@@ -19,14 +74,12 @@
                 growing="true"
                 growingThreshold="20">
 
+                <!-- El SearchField se fue al FilterBar.
+                     Acá solo queda el título. -->
                 <headerToolbar>
                     <Toolbar>
                         <Title text="{i18n>tituloSelecciones}"/>
                         <ToolbarSpacer/>
-                        <SearchField
-                            width="20rem"
-                            placeholder="{i18n>placeholderBuscar}"
-                            liveChange="onBuscar"/>
                     </Toolbar>
                 </headerToolbar>
 
@@ -49,7 +102,9 @@
                             <Text text="{nombre}"/>
 
                             <!-- El texto sigue siendo el valor CRUDO (UEFA).
-                                 Solo el color y el ícono salen del formatter. -->
+                                 Solo el color y el ícono salen del formatter.
+                                 Si acá tradujéramos UEFA→Europa, el FilterBar
+                                 filtraría por un valor que no existe en la base. -->
                             <ObjectStatus
                                 text="{confederacion}"
                                 state="{
