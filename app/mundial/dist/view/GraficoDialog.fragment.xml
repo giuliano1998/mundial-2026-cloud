@@ -1,0 +1,65 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:viz="sap.viz.ui5.controls"
+    xmlns:vizData="sap.viz.ui5.data"
+    xmlns:vizFeeds="sap.viz.ui5.controls.common.feeds">
+
+    <Dialog
+    id="dialogGrafico"
+    title="{i18n>tituloGrafico}"
+    contentWidth="28rem"
+    contentHeight="24rem"
+    resizable="true">
+
+        <content>
+            <!-- Los datos vienen del modelo "grafico" (JSONModel),
+                 no del OData: sap.viz es de la generación V2 y su
+                 FlattenedDataset no resuelve bindings V4. -->
+            <viz:VizFrame
+    id="vizFrame"
+    width="100%"
+    height="24rem"
+    vizType="pie"
+    uiConfig="{applicationSet:'fiori'}"
+    vizProperties="{
+        title: { visible: false },
+        legend: { title: { visible: false } },
+        plotArea: { dataLabel: { visible: true, type: 'percentage' } }
+    }">
+
+                <viz:dataset>
+                    <vizData:FlattenedDataset data="{grafico>/datos}">
+                        <vizData:dimensions>
+                            <vizData:DimensionDefinition
+                                name="Confederacion"
+                                value="{grafico>confederacion}"/>
+                        </vizData:dimensions>
+                        <vizData:measures>
+                            <vizData:MeasureDefinition
+                                name="Cantidad"
+                                value="{grafico>cantidad}"/>
+                        </vizData:measures>
+                    </vizData:FlattenedDataset>
+                </viz:dataset>
+
+                <!-- Los feeds atan dimensiones y medidas a los "puertos"
+                     visuales del gráfico. En una torta:
+                       size  = tamaño de la porción
+                       color = qué la distingue
+                     Los values deben coincidir EXACTAMENTE con los
+                     name de arriba. Si no, sale vacío SIN error. -->
+                <viz:feeds>
+                    <vizFeeds:FeedItem uid="size"  type="Measure"   values="Cantidad"/>
+                    <vizFeeds:FeedItem uid="color" type="Dimension" values="Confederacion"/>
+                </viz:feeds>
+
+            </viz:VizFrame>
+        </content>
+
+        <beginButton>
+            <Button text="{i18n>btnCerrar}" press="onCerrarGrafico"/>
+        </beginButton>
+
+    </Dialog>
+</core:FragmentDefinition>

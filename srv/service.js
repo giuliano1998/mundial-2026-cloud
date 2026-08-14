@@ -1,8 +1,5 @@
 const cds = require('@sap/cds');
 
-// Traducción de valor técnico → valor de presentación.
-// En una app real esto saldría de una entidad de textos con
-// 'localized', no de un objeto hardcodeado.
 const CONFEDERACIONES = {
     UEFA:     'Europa',
     CONMEBOL: 'Sudamérica',
@@ -23,9 +20,9 @@ module.exports = class MundialService extends cds.ApplicationService {
 
     init() {
 
-        // SIEMPRE PRIMERO. Todo lo de abajo depende de estas constantes.
-        // Con const/let, usarlas antes de esta línea tira
-        // "Cannot access 'X' before initialization" (temporal dead zone).
+       // Va primero: con const, usarlas antes de esta línea tira
+       // "Cannot access 'X' before initialization".
+       
         const { Jugadores, Selecciones } = this.entities;
 
         /* ==============================================================
@@ -136,7 +133,7 @@ module.exports = class MundialService extends cds.ApplicationService {
                 }
 
                 // ACÁ está la diferencia con NUMC.
-                // En ABAP asignabas un entero a un NUMC(6) y el relleno
+                // En ABAP se asignaba un entero a un NUMC(6) y el relleno
                 // con ceros era automático. En CDS el campo es String(6),
                 // así que el padding lo hacemos a mano.
                 datos.jugadorId = String(siguiente).padStart(6, '0');
@@ -185,8 +182,8 @@ module.exports = class MundialService extends cds.ApplicationService {
             }
         });
 
-        // OBLIGATORIO: registra los handlers del framework.
         // Sin esto el servicio no responde nada.
         return super.init();
     }
 };
+

@@ -10,6 +10,7 @@ build-parameters:
       commands:
         - npm ci
         - npx cds build --production
+
 modules:
   - name: mundialcloud-srv
     type: nodejs
@@ -37,19 +38,42 @@ modules:
     requires:
       - name: mundialcloud-db
 
-  - name: mundialcloud
-    type: approuter.nodejs
-    path: app/router
-    # ↓↓↓ ESTE BLOQUE ES LO NUEVO ↓↓↓
-    # Copia la app UI5 dentro del approuter antes de empaquetarlo.
-    # Los comandos se ejecutan parados en app/router/
+  # Compila la app UI5 y genera dist/mundial.zip.
+  # Antes esto no era un módulo: eran archivos que el approuter
+  # copiaba con un cp. Ahora tiene identidad propia y se despliega.
+  - name: mundial-ui
+    type: html5
+    path: app/mundial
     build-parameters:
       builder: custom
       commands:
-        - rm -rf resources/mundial
-        - mkdir -p resources/mundial
-        - cp -r ../mundial/webapp/. resources/mundial/
-    # ↑↑↑ FIN DEL BLOQUE NUEVO ↑↑↑
+        - npm install
+        - npm run build
+      supported-platforms: []
+      build-result: dist
+
+  # Sube el zip al HTML5 Application Repository.
+  # Corre UNA VEZ y termina, igual que el db-deployer.
+  - name: mundialcloud-app-deployer
+    type: com.sap.application.content
+    path: .
+    requires:
+      - name: mundialcloud-html5-repo-host
+        parameters:
+          content-target: true
+    build-parameters:
+      build-result: resources
+      requires:
+        - artifacts:
+            - mundial.zip
+          name: mundial-ui
+          target-path: resources/
+
+  - name: mundialcloud
+    type: approuter.nodejs
+    path: app/router
+    # Se eliminó el build-parameters que copiaba webapp/.
+    # La app ya no vive acá: la sirve el HTML5 Repository.
     parameters:
       keep-existing-routes: true
       disk-quota: 256M
@@ -62,6 +86,8 @@ modules:
           url: ~{srv-url}
           forwardAuthToken: true
       - name: mundialcloud-auth
+      - name: mundialcloud-html5-repo-runtime
+      - name: mundialcloud-destination
     provides:
       - name: app-api
         properties:
@@ -86,8 +112,62 @@ resources:
             - https://*~{app-api/app-uri}/**
     requires:
       - name: app-api
+  - name: mundialcloud-html5-repo-host-key
+    type: org.cloudfoundry.existing-service-key
+    parameters:
+      service-name: mundialcloud-html5-repo-host
+      service-key-name: mundialcloud-html5-repo-host-key
+
+  - name: mundialcloud-auth-key
+    type: org.cloudfoundry.existing-service-key
+    parameters:
+      service-name: mundialcloud-auth
+      service-key-name: mundialcloud-auth-key
+      
   - name: mundialcloud-db
     type: com.sap.xs.hdi-container
     parameters:
       service: hana
       service-plan: hdi-shared
+
+  # DONDE SE GUARDAN los archivos de la app
+  - name: mundialcloud-html5-repo-host
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: html5-apps-repo
+      service-plan: app-host
+
+  # DESDE DONDE SE SIRVEN al usuario.
+  # Dos planes del mismo servicio: almacenamiento vs ejecución.
+  - name: mundialcloud-html5-repo-runtime
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: html5-apps-repo
+      service-plan: app-runtime
+
+  # HTML5Runtime_enabled es lo que permite que Work Zone
+  # DESCUBRA la app. Sin esto, el content provider aparece vacío.
+  - name: mundialcloud-destination
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: destination
+      service-plan: lite
+      config:
+        HTML5Runtime_enabled: true
+        version: 1.0.0
+        init_data:
+          instance:
+            existing_destinations_policy: update
+            destinations:
+              - Name: mundialcloud-html5-repo-host
+                ServiceInstanceName: mundialcloud-html5-repo-host
+                ServiceKeyName: mundialcloud-html5-repo-host-key
+                sap.cloud.service: mundialcloud.service
+              - Authentication: OAuth2UserTokenExchange
+                Name: mundialcloud-srv-api
+                TokenServiceInstanceName: mundialcloud-auth
+                TokenServiceKeyName: mundialcloud-auth-key
+                URL: ~{srv-api/srv-url}
+                sap.cloud.service: mundialcloud.service
+    requires:
+      - name: srv-api
