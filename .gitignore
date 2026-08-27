@@ -20,4 +20,4 @@ mta_archives/
 app/router/resources/
 
 app/mundial/dist/
-resources/
+resources/.DS_Store
