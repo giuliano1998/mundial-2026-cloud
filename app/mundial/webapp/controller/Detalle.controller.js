@@ -19,10 +19,9 @@ sap.ui.define([
          * ================================================================== */
 
         onInit: function () {
-            // Modelo local de ESTADO DE PANTALLA (no de negocio).
             this.getView().setModel(new JSONModel({
                 tituloDialog: "",
-                modo:         "",     // "crear" | "editar"
+                modo:         "",
                 jugador:      { nombre: "", dorsal: "", posicion: "MED" }
             }), "ui");
 
@@ -32,7 +31,6 @@ sap.ui.define([
         },
 
         _onObjectMatched: function (oEvent) {
-            // Lo guardamos: el CREATE lo necesita
             this._sSeleccionId = oEvent.getParameter("arguments").seleccionId;
 
             this.getView().bindElement({
@@ -51,16 +49,12 @@ sap.ui.define([
             oUi.setProperty("/tituloDialog", this._txt("dlgNuevo"));
             oUi.setProperty("/jugador",      { nombre: "", dorsal: "", posicion: "MED" });
 
-            // Guardamos el contexto que se va a editar (null al crear)
             this._oContextEdicion = null;
 
             this._getDialog().then(function (oDialog) { oDialog.open(); });
         },
 
         onEditarJugador: function (oEvent) {
-            // ⭐ El botón hereda el binding context de su fila.
-            //    En V4 el Context NO es solo un puntero: es un objeto
-            //    que sabe modificarse y borrarse a sí mismo.
             var oContext = oEvent.getSource().getBindingContext();
             var oDatos   = oContext.getObject();
             var oUi      = this.getView().getModel("ui");
@@ -68,30 +62,25 @@ sap.ui.define([
             oUi.setProperty("/modo",         "editar");
             oUi.setProperty("/tituloDialog", this._txt("dlgEditar"));
 
-            // COPIA, no referencia: si el usuario cancela, el
-            // modelo OData queda intacto.
             oUi.setProperty("/jugador", {
                 nombre:   oDatos.nombre,
                 dorsal:   oDatos.dorsal,
                 posicion: oDatos.posicion
             });
 
-            // Guardamos el CONTEXTO, no el path.
-            // En V4 el contexto es lo que sabe actualizarse.
             this._oContextEdicion = oContext;
 
             this._getDialog().then(function (oDialog) { oDialog.open(); });
         },
 
         /* ==================================================================
-         * GUARDAR — acá está la diferencia real con V2
+         * GUARDAR
          * ================================================================== */
 
         onGuardarJugador: async function () {
             var oUi    = this.getView().getModel("ui");
             var oDatos = oUi.getProperty("/jugador");
 
-            // Validación de UX. La de verdad está en service.js.
             if (!oDatos.nombre) {
                 MessageBox.warning(this._txt("msgNombreObligatorio"));
                 return;
@@ -113,40 +102,82 @@ sap.ui.define([
         },
 
         /**
-         * CREATE en V4.
-         *
-         * V2:  oModel.create("/JugadorSet", datos, { success, error })
-         * V4:  oBinding.create(datos)  →  devuelve un Context
-         *
-         * Se crea SOBRE EL BINDING de la tabla, que es relativo a
-         * {jugadores}. UI5 postea a /Selecciones('111')/jugadores,
-         * así que la fila aparece sola en la tabla: no hace falta refresh.
+         * CREATE 
          */
         _crearJugador: function (oDatos) {
+            var that     = this;
             var oBinding = this.byId("tablaJugadores").getBinding("items");
+            var oMM      = sap.ui.getCore().getMessageManager();
 
-            // NO mandamos jugadorId: lo genera el handler de service.js
-            var oContext = oBinding.create({
-                seleccionId: this._sSeleccionId,
-                nombre:      oDatos.nombre,
-                dorsal:      oDatos.dorsal,
-                posicion:    oDatos.posicion
+            // OJO: en OData V4, si el POST falla, oContext.created() NO se rechaza:
+            // el modelo reintenta el alta solo y la promesa queda pendiente para
+            // siempre. El evento que sí avisa del fallo es createCompleted.
+            return new Promise(function (fnResolve, fnReject) {
+
+                // Foto de los mensajes previos, para quedarnos solo con el que
+                // deje ESTE alta y no con el error de un intento anterior.
+                var aPrevios = oMM.getMessageModel().getData().slice();
+
+                var fnCompletado = function (oEvent) {
+                    oBinding.detachCreateCompleted(fnCompletado);
+
+                    if (oEvent.getParameter("success")) {
+                        // El contexto recién creado conserva los datos que mandó el
+                        // cliente ("9"); refrescamos para mostrar lo que quedó en
+                        // la base ("09") y evitar la fila repetida.
+                        fnResolve();
+
+                        // El refresh va en el proximo tick: si se lanza acá, el alta
+                        // todavía figura como cambio pendiente y refresh() tira error.
+                        setTimeout(function () {
+                            try { oBinding.refresh(); } catch (oIgnorado) { /* la lista ya está al día */ }
+                        }, 0);
+                        return;
+                    }
+
+                    // El mensaje del backend se lee ANTES de limpiar, porque
+                    // resetChanges() se lleva puestos los mensajes del alta.
+                    var sMensaje = that._mensajeDelAlta(aPrevios);
+
+                    // Cancela el alta pendiente: sin esto la fila fantasma queda
+                    // en la tabla y V4 reintenta el POST una y otra vez.
+                    oBinding.resetChanges();
+
+                    fnReject(new Error(sMensaje));
+                };
+
+                oBinding.attachCreateCompleted(fnCompletado);
+
+                var oContext = oBinding.create({
+                    seleccionId: that._sSeleccionId,
+                    nombre:      oDatos.nombre,
+                    dorsal:      oDatos.dorsal,
+                    posicion:    oDatos.posicion
+                });
+
+                // Al cancelar el alta, created() se rechaza con canceled = true.
+                // Lo tragamos para no dejar una promesa rechazada sin manejar.
+                oContext.created().catch(function () { /* cancelado a proposito */ });
             });
-
-            // created() es una PROMESA que se resuelve cuando el POST
-            // termina bien, y se rechaza si falla. Es el equivalente
-            // de los callbacks { success, error } de V2.
-            return oContext.created();
         },
 
         /**
-         * UPDATE en V4.
-         *
-         * V2:  oModel.update(path, entidadCompleta, { success, error })
-         * V4:  oContext.setProperty(campo, valor)  →  PATCH
-         *
-         * Con updateGroupId "$auto", los setProperty del mismo turno
-         * se agrupan en UN SOLO PATCH con los campos cambiados.
+         * Mensaje que dejó el backend para ESTE alta.
+         * Los errores de un POST de V4 llegan al Message Manager, no a la promesa.
+         */
+        _mensajeDelAlta: function (aPrevios) {
+            var aTodos   = sap.ui.getCore().getMessageManager().getMessageModel().getData() || [];
+            var aNuevos  = aTodos.filter(function (oMsg) { return aPrevios.indexOf(oMsg) === -1; });
+            var oMensaje = aNuevos[aNuevos.length - 1];
+
+            if (oMensaje) {
+                return oMensaje.message || (oMensaje.getMessage && oMensaje.getMessage()) || "";
+            }
+            return "No se pudo crear el jugador.";
+        },
+
+        /**
+         * UPDATE 
          */
         _modificarJugador: function (oDatos) {
             var oCtx = this._oContextEdicion;
@@ -167,7 +198,6 @@ sap.ui.define([
             var sNombre  = oContext.getProperty("nombre");
             var that     = this;
 
-            // Toda acción destructiva se confirma. Siempre.
             MessageBox.confirm(
                 this._txt("msgConfirmarBorrado", [sNombre]),
                 {
@@ -176,10 +206,6 @@ sap.ui.define([
                         if (sAccion !== MessageBox.Action.OK) { return; }
 
                         try {
-                            // V2:  oModel.remove(path, { success, error })
-                            // V4:  oContext.delete()  →  promesa
-                            //      El contexto se borra a sí mismo y
-                            //      desaparece de la tabla solo.
                             await oContext.delete();
                             MessageToast.show(that._txt("msgBorrado"));
                         } catch (oError) {
@@ -195,17 +221,12 @@ sap.ui.define([
          * ================================================================== */
 
         _getDialog: function () {
-            // Se carga UNA vez y se cachea la promesa.
-            // Si lo cargás en cada apertura, acumulás diálogos en el DOM.
             if (!this._pDialog) {
                 this._pDialog = Fragment.load({
                     id:         this.getView().getId(),
                     name:       "mundial.view.JugadorDialog",
                     controller: this
                 }).then(function (oDialog) {
-                    // addDependent conecta el diálogo al ciclo de vida de
-                    // la vista y le pasa sus modelos.
-                    // SIN ESTO, {ui>...} e {i18n>...} no resuelven nada.
                     this.getView().addDependent(oDialog);
                     return oDialog;
                 }.bind(this));
@@ -233,17 +254,10 @@ sap.ui.define([
             }
         },
 
-        /**
-         * Formatea un valor como clave OData tipo String.
-         * Es lo que oModel.createKey() hacía en V2.
-         */
         _formatKey: function (sValue) {
             return "'" + String(sValue).replace(/'/g, "''") + "'";
         },
 
-        /**
-         * Atajo para leer textos del bundle i18n.
-         */
         _txt: function (sKey, aArgs) {
             return this.getOwnerComponent()
                        .getModel("i18n")
@@ -251,15 +265,10 @@ sap.ui.define([
                        .getText(sKey, aArgs);
         },
 
-        /**
-         * Extrae el mensaje que puso req.error() en service.js.
-         */
         _extraerMensaje: function (oError) {
             console.error("Error crudo:", oError);
 
-            // UI5 v4 suele traer el mensaje ya parseado
             if (oError && oError.message) {
-                // A veces viene con el JSON completo embebido
                 try {
                     var oJson = JSON.parse(oError.message);
                     if (oJson.error && oJson.error.message) {

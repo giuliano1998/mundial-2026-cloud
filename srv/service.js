@@ -16,6 +16,21 @@ const CONFEDERACIONES = {
  * CAP detecta este archivo por convención de nombre:
  * srv/service.js  se asocia a  srv/service.cds
  */
+/**
+ * Normaliza el dorsal antes de compararlo y de guardarlo.
+ * "1", " 1 " y "01" son EL MISMO dorsal: si no se normaliza, la validación
+ * de unicidad compara strings distintos y deja pasar duplicados.
+ * Devuelve el dorsal como String(2) con cero a la izquierda, o null si no es válido.
+ */
+function normalizarDorsal(valor) {
+    if (valor === undefined || valor === null) return null;
+    const texto = String(valor).trim();
+    if (!/^[0-9]{1,2}$/.test(texto)) return null;
+    const numero = Number(texto);
+    if (numero < 1 || numero > 99) return null;
+    return String(numero).padStart(2, '0');
+}
+
 module.exports = class MundialService extends cds.ApplicationService {
 
     init() {
@@ -67,6 +82,9 @@ module.exports = class MundialService extends cds.ApplicationService {
             // ---- 1. Validaciones de obligatoriedad ------------------
             // SIEMPRE en el backend, aunque el front también valide:
             // el front se puede saltear con curl o Postman.
+            // Los espacios no son un nombre: sin trim, "   " pasaba la validación.
+            if (typeof datos.nombre === 'string') datos.nombre = datos.nombre.trim();
+
             if (!datos.nombre) {
                 // El 3er argumento marca QUÉ campo falló: UI5 lo usa
                 // para resaltar el input correspondiente.
@@ -92,6 +110,14 @@ module.exports = class MundialService extends cds.ApplicationService {
             // Va acá, al nivel de las demás: si estuviera dentro del if
             // de generación de ID, un POST que mande jugadorId se la
             // saltearía entera.
+            // ---- 3.a Normalización: el dorsal se guarda SIEMPRE como String(2)
+            // ("1" -> "01"). Sin esto conviven "1" y "01" en la misma selección
+            // y la validación de unicidad no sirve para nada.
+            datos.dorsal = normalizarDorsal(datos.dorsal);
+            if (!datos.dorsal) {
+                return req.error(400, 'El dorsal es obligatorio y debe ser un número entre 1 y 99', 'dorsal');
+            }
+
             if (datos.dorsal) {
 
                 // Los DOS campos en el where: el 10 puede existir en
@@ -150,11 +176,19 @@ module.exports = class MundialService extends cds.ApplicationService {
 
             // OJO: en un PATCH, req.data trae SOLO los campos enviados.
             // Por eso se valida únicamente si el campo viene informado.
+            if (typeof req.data.nombre === 'string') req.data.nombre = req.data.nombre.trim();
             if ('nombre' in req.data && !req.data.nombre) {
                 return req.error(400, 'El nombre es obligatorio', 'nombre');
             }
 
             if ('dorsal' in req.data) {
+
+                // Misma normalización que en el CREATE: si no, el chequeo compara
+                // "1" contra "01" y deja pasar el duplicado.
+                req.data.dorsal = normalizarDorsal(req.data.dorsal);
+                if (!req.data.dorsal) {
+                    return req.error(400, 'El dorsal es obligatorio y debe ser un número entre 1 y 99', 'dorsal');
+                }
 
                 // req.params trae las claves de la URL:
                 // /Jugadores(jugadorId='000004',seleccionId='111')
